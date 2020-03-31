@@ -1,5 +1,5 @@
 ''' author: samtenka
-    change: 2020-03-28
+    change: 2020-03-31
     create: 2020-03-28
     descrp: Illustrate fast grid operations exposed via SWIG.  
     to use: Ensure that color_patches module is wrapped by running
@@ -10,7 +10,9 @@
 
                 python example.py  
 
-            and inspect printed output.
+            and inspect printed output.  Or, use example grids here defined:
+            
+                from example import example_grids 
 '''
 
 import numpy as np
@@ -192,6 +194,7 @@ if __name__=='__main__':
 
     #-----------------  0.2.1. display example grids  ------------------------#
 
+    status('our [{}] example grids look like:'.format(len(example_grids)))
     print(CC + str_from_grids(example_grids[:4]))
     print(CC + str_from_grids(example_grids[4:]))
  
