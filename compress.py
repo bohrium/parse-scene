@@ -78,11 +78,12 @@ def test_compute_maximals():
 if __name__=='__main__':
     #test_compute_maximals()
 
-    x = example_grids[1]
+    x = example_grids[8]
     rects = rects_from_scene(x)
     
     minrects = []
     supmasks = [] 
+    maximalss = []
 
     new_rects = []
     for i, r in enumerate(rects):
@@ -110,30 +111,49 @@ if __name__=='__main__':
         minrect_rendered[mr:mrr, mc:mcc] = 1
     
         supmask = np.logical_or(x==color, after!=0)
-        supmasks.append(supmask)
-    
-        #print(CC+str_from_grids([y, effects, x]))
         maximals = compute_maximals(minrect, supmask)
+        maximalss.append(maximals)
+        supmask = build_from([(mm, 1) for mm in maximals], x.shape)[-1] 
+        supmasks.append(supmask)
 
-        decorated_supmask = supmask.copy() * 3
-        decorated_supmask[mr:mrr,mc:mcc] = 4
+    under = [
+        [
+            int(i<j and (np.logical_and(sm_a, sm_b)).any())
+            for j, sm_b in enumerate(supmasks)
+        ]
+        for i, sm_a in enumerate(supmasks) 
+    ]
 
-        print(CC + ' or '.join(
-            'rect({}, {}, {}, {}, @{} {}@D )'.format( 
-                '[{}..{}]'.format(r, mr)   if r !=mr  else str(r ),
-                '[{}..{}]'.format(mrr, rr) if rr!=mrr else str(rr),
-                '[{}..{}]'.format(c, mc)   if c !=mc  else str(c ),
-                '[{}..{}]'.format(mcc, mc) if cc!=mcc else str(cc),
-                colors[color],
-                colors[color]
-            )
-            for r,rr,c,cc in maximals
-        ), end=' ')
-        print('then')
-        #rendered_maximals = []
-        #for r,rr,c,cc in maximals: 
-        #    y = np.zeros(x.shape, dtype=np.byte)
-        #    y[r:rr,c:cc] = 1
-        #    y[mr:mrr,mc:mcc] = 4
-        #    rendered_maximals.append(y)
-        #print(CC+str_from_grids([decorated_supmask] + rendered_maximals))
+    dag = []
+    remaining_nodes = set(range(len(rects)))
+    while remaining_nodes:
+        n = min(remaining_nodes)
+        cohort = set([n])
+        for i in remaining_nodes:
+            for j in remaining_nodes: 
+                if under[j][i]:
+                    break
+            else:
+                cohort.add(i)
+        remaining_nodes = remaining_nodes.difference(cohort)
+        dag.append(cohort)
+
+    for cohort in dag:
+        print('{')
+        for i in cohort:
+            (r, rr, c, cc), color = rects[i]
+            (mr, mrr, mc, mcc), _ = minrects[i]
+            maximals = maximalss[i]
+            print(CC + '    ' + '   or   '.join(
+                'rect({}, {}, {}, {}, @{} {}@D )'.format( 
+                    '[{}..{}]'.format(r, mr)   if r !=mr  else str(r ),
+                    '[{}..{}]'.format(mrr, rr) if rr!=mrr else str(rr),
+                    '[{}..{}]'.format(c, mc)   if c !=mc  else str(c ),
+                    '[{}..{}]'.format(mcc, cc) if cc!=mcc else str(cc),
+                    colors[color],
+                    colors[color]
+                )
+                for r,rr,c,cc in maximals
+            ))
+        print('}', end=' ')
+    print()

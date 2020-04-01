@@ -175,9 +175,27 @@ def box_and_comb():
     return x
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~  0.2. Package Example Grids  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~  0.2. Test Harness for Version Spaces  ~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#---------------------  0.2.0. expose example grids  -------------------------#
+def ambig(): 
+    x = np.zeros(shape=(9, 9), dtype=np.byte)
+
+    #-----------------  0.2.0. draw a rectangle's border  --------------------#
+
+    x[ : ,  : ] = 4
+    x[2:6,  : ] = 2
+    x[2:6, 3:9] = 1
+    x[6:8, 3:9] = 2
+    x[  6, :3 ] = 3
+
+    #-----------------  0.2.1. draw a comb shape  ----------------------------#
+
+    return x
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~  0.3. Package Example Grids  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+#---------------------  0.3.0. expose example grids  -------------------------#
 
 example_grids = [
     archipelagos(),
@@ -188,15 +206,16 @@ example_grids = [
     four_paddles(),
     escher_stair(),
     box_and_comb(),
+    ambig(),
 ]
 
 if __name__=='__main__':
 
-    #-----------------  0.2.1. display example grids  ------------------------#
+    #-----------------  0.3.1. display example grids  ------------------------#
 
     status('our [{}] example grids look like:'.format(len(example_grids)))
-    print(CC + str_from_grids(example_grids[:4]))
-    print(CC + str_from_grids(example_grids[4:]))
+    for i in range(0,len(example_grids), 4):
+        print(CC + str_from_grids(example_grids[i:i+4]))
  
     #=========================================================================#
     #=  1. ILLUSTRATE GRID ANALYSIS FUNCTIONS  ===============================#

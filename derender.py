@@ -4,7 +4,7 @@
     descrp: Greedily parse scenes into rectangles   
     to use: Use exposed methods like so:
 
-                from derender import rects_from_scene, visualize_construction
+                from derender import rects_from_scene, build_from 
                 rects = rects_from_scene(x)
                 ((r, rr, c, cc), color) = rects[0]  # first rectangle
                 intermediates = build_from(rects, x.shape)
@@ -69,8 +69,8 @@ def get_corners(ref):
             corners.add((r,c))
     return corners
 
-def get_next(base, ref, d, corners): 
-    h, w = ref.shape
+def get_next(base, x, d, corners): 
+    h, w = x.shape
 
     rects_by_dist = {}
     for r in range(h):
@@ -78,11 +78,11 @@ def get_next(base, ref, d, corners):
             active_cols = [
                 c for c in range(w+1)
                 if (r,c) in corners or (rr,c) in corners
-            ] 
-            for ci in range(len(active_cols)):
+            ] # note: is sorted
+            for ci in range(len(active_cols)-1):
                 c = active_cols[ci]
-                y = base.copy()
 
+                y = base.copy()
                 for cci in range(ci+1, len(active_cols)):
                     cc = active_cols[cci]
                     colors = set(
@@ -95,7 +95,7 @@ def get_next(base, ref, d, corners):
     best = min(((v,k) for k,v in rects_by_dist.items())) 
     return best
 
-def rects_from_scene(x):
+def rects_from_scene(x, metric=metric_combined):
     corners = get_corners(x)
 
     intermediate_scenes = []
@@ -119,7 +119,8 @@ def rects_from_scene(x):
 
 def build_from(rectangles, shape):
     intermediates = [] 
-    base = np.zeros(x.shape, dtype=np.byte)
+    base = np.zeros(shape, dtype=np.byte)
+    intermediates.append(base.copy())
     for ((r, rr, c, cc), color) in rectangles:
         base[r:rr, c:cc] = color 
         intermediates.append(base.copy())
@@ -161,11 +162,11 @@ if __name__=='__main__':
 
     start = secs_endured()
 
-    for i, x in enumerate(example_grids):
+    for i, x in enumerate(example_grids[8:]):
         status('parsing scene [{}] greedily ... '.format(i), end='')
         for nm, metric in metrics_by_nm.items():
             status('[{}] '.format(nm), end='')
-            rects = rects_from_scene(x)
+            rects = rects_from_scene(x, metric)
             status('takes [{:2d}] steps    '.format(len(rects)), end='')
             if params['vis']:
                 visualize_construction(x, rects)
