@@ -8,7 +8,6 @@
                 rects = rects_from_scene(x)
                 ((r, rr, c, cc), color) = rects[0]  # first rectangle
                 intermediates = build_from(rects, x.shape)
-                masks = build_from(rects[::-1], x.shape)
 
             Or, to see parses of example scenes under different heuristics, run
 
@@ -29,6 +28,22 @@ from vis import str_from_grids
 from color_patches import nb_color_patches
 from example import example_grids 
 
+#=============================================================================#
+#=====  0. GREEDY SEARCH  ====================================================#
+#=============================================================================#
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~  0.0. Heuristic Distance Metrics  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+#---------------------  0.0.0. pixel distance  -------------------------------#
+
+def metric_geo(pred, ref):
+    if np.logical_and(pred!=0, ref==0).any():
+        return float('+inf')
+    return np.count_nonzero((pred!=ref) + 0)
+
+#---------------------  0.0.1. topology-aware distance  ----------------------#
+
 def diff(pred, ref):
     z = ref.copy() 
     z[pred==ref] = 0 
@@ -40,16 +55,18 @@ def metric_top(pred, ref):
     z = diff(pred, ref)
     return nb_color_patches(z)**0.5 / 2.0
 
-def metric_geo(pred, ref):
-    if np.logical_and(pred!=0, ref==0).any():
-        return float('+inf')
-    return np.count_nonzero((pred!=ref) + 0)
+#---------------------  0.0.2. mixed heuristic switches from top to geo  -----#
 
 def metric_combined(pred, ref):
     return (
         max(3**0.5/2, metric_top(pred, ref)), 
         metric_geo(pred, ref),
     )
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~  0.1. Greedy Step  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+#---------------------  0.1.0. find cell corners that could be rect corners  -#
 
 def get_corners(ref):
     corners = set()
@@ -72,6 +89,8 @@ def get_corners(ref):
 def get_next(base, x, d, corners): 
     h, w = x.shape
 
+    #-----------------  0.1.1. for each rect with a data-matching corner... --#
+
     rects_by_dist = {}
     for r in range(h):
         for rr in range(r+1, h+1):
@@ -85,15 +104,23 @@ def get_next(base, x, d, corners):
                 y = base.copy()
                 for cci in range(ci+1, len(active_cols)):
                     cc = active_cols[cci]
+
+                    #-  0.1.2. ...consider possible colors... ----------------#
+
                     colors = set(
                         x[a,b] for a in (r, rr-1) for b in (c, cc-1) if x[a,b]
                     )
                     for color in colors:
                         y[r:rr, c:cc] = color
                         rects_by_dist[((r,rr,c,cc), color)] = d(y,x), -(rr-r)*(cc-c)  
+
+    #-----------------  0.1.3. ...and return best  ---------------------------#
     
     best = min(((v,k) for k,v in rects_by_dist.items())) 
     return best
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~  0.2. Greedy Loop  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 def rects_from_scene(x, metric=metric_combined):
     corners = get_corners(x)
@@ -117,6 +144,10 @@ def rects_from_scene(x, metric=metric_combined):
     
     return rectangles
 
+#=============================================================================#
+#=====  2. TIME-INTEGRATION AND VISUALIZATION  ===============================#
+#=============================================================================#
+
 def build_from(rectangles, shape):
     intermediates = [] 
     base = np.zeros(shape, dtype=np.byte)
@@ -126,16 +157,25 @@ def build_from(rectangles, shape):
         intermediates.append(base.copy())
     return intermediates
 
-def visualize_construction(x, rectangles): 
+def visualize_construction(x, rectangles, print_diffs=True, row_len=8): 
     print()
-    intermediates = build_from(rectangles, x.shape)
-    differences = [diff(base, x) for base in intermediates] 
+    intermediates = build_from(rectangles, x.shape)[1:]
+    differences = [diff(base, x) for base in intermediates][1:]
 
-    for i in range(0, len(rectangles)+1, 8):
-        print(CC + str_from_grids(intermediates[i:i+8]))
-        print(CC + str_from_grids(differences[i:i+8]))
+    for i in range(0, len(rectangles), row_len):
+        print(CC + str_from_grids(intermediates[i:i+row_len]))
+        if print_diffs:
+            print(CC + str_from_grids(differences[i:i+row_len]))
+
+#=============================================================================#
+#=====  3. INTERACTIVE LOOP  =================================================#
+#=============================================================================#
 
 if __name__=='__main__':
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+    #~~~~~~~~~  3.0. Command Line Parameters  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
     import sys
     params = {
         'vis'    :True,
@@ -160,6 +200,9 @@ if __name__=='__main__':
             'to compare speeds, we need *one* metric specified and no vis'
         )
 
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+    #~~~~~~~~~  3.1. Display Derendering Output  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
     start = secs_endured()
 
     for i, x in enumerate(example_grids):
@@ -173,6 +216,9 @@ if __name__=='__main__':
                 input(CC + '@O next?@D ')
         print()
     
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+    #~~~~~~~~~  3.2. Report Timing Info  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
     if params['clock']:
         end = secs_endured()
         status('parsed [{}] scenes in [{:.2f}] secs per scene'.format(

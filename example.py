@@ -45,7 +45,7 @@ def archipelagos():
         (5, 9, 6, 8):1, #  \__ these two rectangles touch,
         (7, 9, 4, 6):2, # _/   but they differ in color
         (4, 6, 1, 3):2, #  
-        (4, 5, 4, 5):3, # }--- a single green dot  
+        (4, 5, 4, 5):3, # }~~~ a single green dot  
     }.items():
         x[r:rr,c:cc] = color
 
@@ -240,13 +240,13 @@ def giftwrap_one():
 def giftwrap_two(): 
     x = np.zeros(shape=(9, 9), dtype=np.byte)
 
-    #-----------------  0.2.6. draw guitar-shaped gift  ----------------------#
+    #-----------------  0.2.6. draw speckled background  ---------------------#
 
     x[ : ,  : ] = 2
     x[ : :4,  : :2] = 3
     x[2: :4, 1: :2] = 3
 
-    #-----------------  0.2.7. speckle gift  ---------------------------------#
+    #-----------------  0.2.7. cut our triangular gift  ----------------------#
 
     x[ :1,  : ] = 4
     x[8: ,  : ] = 4
