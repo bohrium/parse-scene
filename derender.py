@@ -131,7 +131,7 @@ def visualize_construction(x, rectangles):
     intermediates = build_from(rectangles, x.shape)
     differences = [diff(base, x) for base in intermediates] 
 
-    for i in range(0, len(rectangles), 8):
+    for i in range(0, len(rectangles)+1, 8):
         print(CC + str_from_grids(intermediates[i:i+8]))
         print(CC + str_from_grids(differences[i:i+8]))
 
@@ -162,7 +162,7 @@ if __name__=='__main__':
 
     start = secs_endured()
 
-    for i, x in enumerate(example_grids[8:]):
+    for i, x in enumerate(example_grids):
         status('parsing scene [{}] greedily ... '.format(i), end='')
         for nm, metric in metrics_by_nm.items():
             status('[{}] '.format(nm), end='')

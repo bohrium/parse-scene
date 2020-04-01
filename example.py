@@ -1,7 +1,7 @@
 ''' author: samtenka
     change: 2020-03-31
     create: 2020-03-28
-    descrp: Illustrate fast grid operations exposed via SWIG.  
+    descrp: Illustrate fast grid operations exposed via SWIG. 
     to use: Ensure that color_patches module is wrapped by running
 
                 make color_patches
@@ -177,15 +177,19 @@ def box_and_comb():
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~  0.2. Test Harness for Version Spaces  ~~~~~~~~~~~~~~~~~~~~~~~~#
 
-def ambig(): 
+def mondrian_one(): 
     x = np.zeros(shape=(9, 9), dtype=np.byte)
 
-    #-----------------  0.2.0. draw a rectangle's border  --------------------#
+    #-----------------  0.2.0. draw yellow, blue, red ------------------------#
 
     x[ : ,  : ] = 4
+
     x[2:6,  :8] = 2
     x[2:6, 3:8] = 1
     x[6:8, 3: ] = 2
+
+    #-----------------  0.2.1. draw thin green occluders  --------------------#
+
     x[  6, :3 ] = 3
 
     x[0:2,   8] = 3
@@ -193,7 +197,63 @@ def ambig():
     x[6:8,   8] = 3
     x[  8, 1:8] = 3
 
-    #-----------------  0.2.1. draw a comb shape  ----------------------------#
+
+    return x
+
+def mondrian_two(): 
+    x = np.zeros(shape=(9, 9), dtype=np.byte)
+
+    #-----------------  0.2.2. draw color patches  ---------------------------#
+
+    x[0:3,  : ] = 4
+    x[2:5, 4: ] = 4
+    x[3: , 0:3] = 2
+    x[6: , 4: ] = 2
+
+    x[3:7, 0:3] = 1
+    x[2:7, 2:7] = 3 
+
+    #-----------------  0.2.3. draw thin gray edges  -------------------------#
+
+    x[2:3,  : ] = 5
+    x[3: , 3:4] = 5
+    x[5:6, 3: ] = 5
+
+    return x
+
+def giftwrap_one(): 
+    x = np.zeros(shape=(9, 9), dtype=np.byte)
+
+    #-----------------  0.2.4. draw bordered gift  ---------------------------#
+
+    x[ : ,  : ] = 4
+    x[1:8, 1:8] = 2
+
+    #-----------------  0.2.5. wrap gift  ------------------------------------#
+
+    x[1:8,  5] = 1
+    x[ 4 ,1:8] = 3
+    x[ 4 ,  5] = 4
+
+    return x
+
+def giftwrap_two(): 
+    x = np.zeros(shape=(9, 9), dtype=np.byte)
+
+    #-----------------  0.2.6. draw guitar-shaped gift  ----------------------#
+
+    x[ : ,  : ] = 2
+    x[ : :4,  : :2] = 3
+    x[2: :4, 1: :2] = 3
+
+    #-----------------  0.2.7. speckle gift  ---------------------------------#
+
+    x[ :1,  : ] = 4
+    x[8: ,  : ] = 4
+
+    for i in range(1,5):
+        x[:2*i, :5-i]= 1
+        x[:2*i, -(5-i):]= 1
 
     return x
 
@@ -211,7 +271,10 @@ example_grids = [
     four_paddles(),
     escher_stair(),
     box_and_comb(),
-    ambig(),
+    mondrian_one(),
+    mondrian_two(),
+    giftwrap_one(),
+    giftwrap_two(),
 ]
 
 if __name__=='__main__':

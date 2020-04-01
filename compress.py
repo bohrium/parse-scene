@@ -78,7 +78,7 @@ def test_compute_maximals():
 if __name__=='__main__':
     #test_compute_maximals()
 
-    x = example_grids[8]
+    x = example_grids[11]
     rects = rects_from_scene(x)
     
     minrects = []
